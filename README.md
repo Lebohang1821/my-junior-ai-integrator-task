@@ -1,5 +1,20 @@
 # IELTS Speaking Test Simulation
 
+## Overview
+
+This project simulates an IELTS Speaking Test, providing real-time transcription, scoring, and feedback. It also generates flashcards based on the user's mistakes for later review, following a spaced repetition model.
+
+## Tools, APIs, and Libraries Used
+
+- **Google Cloud Speech-to-Text API**: For real-time audio transcription.
+- **OpenAI API**: For generating simulated IELTS examiner responses.
+- **Express.js**: For building the backend server.
+- **pdfkit**: For generating PDF reports.
+- **Bootstrap**: For styling the frontend.
+- **JavaScript**: For frontend and backend logic.
+- **Node.js**: For running the backend server.
+- **HTML/CSS**: For structuring and styling the frontend.
+
 ## Setup Instructions
 
 1. Clone the repository:
@@ -21,7 +36,7 @@
      ```
    - Add the path to your Google Cloud service account JSON file:
      ```
-     GOOGLE_APPLICATION_CREDENTIALS=./speech-to-text-project.json
+     GOOGLE_APPLICATION_CREDENTIALS=./the-speech-to-text-project.json
      ```
 
 4. Run the server:
@@ -59,8 +74,9 @@
 - Evaluates fluency, lexical resource, grammatical range, and pronunciation.
 
 ### Challenges
-- Ensuring real-time transcription with minimal delay.
-- Providing accurate and helpful feedback.
+- **Real-time Transcription**: Ensuring real-time transcription with minimal delay was challenging. I optimized the audio processing and used efficient APIs to achieve this.
+- **Accurate Feedback**: Providing accurate and helpful feedback required fine-tuning the evaluation algorithms and incorporating user feedback.
+- **Spaced Repetition**: Implementing a spaced repetition algorithm for flashcards to enhance the learning experience.
 
 ## Demo Video
 
