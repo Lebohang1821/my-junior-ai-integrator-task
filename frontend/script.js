@@ -41,6 +41,13 @@ document.getElementById('toggleDarkMode').addEventListener('change', (event) => 
   document.body.classList.toggle('dark-mode', event.target.checked);
 });
 
+document.getElementById('clearData').addEventListener('click', () => {
+  document.getElementById('transcription').innerText = '';
+  document.getElementById('scores').innerHTML = '';
+  document.getElementById('instructions').innerText = '';
+  console.log('Cleared all data'); // Log clear action
+});
+
 async function startTest() {
   const parts = [
     { part: 'part1', instruction: 'Step 1: Please introduce yourself.' },
@@ -143,7 +150,6 @@ async function recordAudio() {
 const recordBtn = document.querySelector(".record"),
   result = document.querySelector(".result"),
   downloadBtn = document.querySelector(".download"),
-  inputLanguage = document.querySelector("#language"),
   clearBtn = document.querySelector(".clear"),
   practiceModeBtn = document.querySelector("#practice-mode"),
   testModeBtn = document.querySelector("#test-mode");
@@ -157,21 +163,10 @@ let SpeechRecognition =
 if (!SpeechRecognition) {
   alert("Speech Recognition API is not supported in this browser.");
 } else {
-  function populateLanguages() {
-    languages.forEach((lang) => {
-      const option = document.createElement("option");
-      option.value = lang.code;
-      option.innerHTML = lang.name;
-      inputLanguage.appendChild(option);
-    });
-  }
-
-  populateLanguages();
-
   function speechToText() {
     try {
       recognition = new SpeechRecognition();
-      recognition.lang = inputLanguage.value;
+      recognition.lang = 'en-US'; // Default language
       recognition.interimResults = true;
       recordBtn.classList.add("recording");
       recordBtn.querySelector("p").innerHTML = "Listening...";
@@ -210,7 +205,7 @@ if (!SpeechRecognition) {
   }
 
   function provideFeedback(speechResult) {
-    fetch('http://localhost:5000/practice', {
+    fetch('http://localhost:3000/practice', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
