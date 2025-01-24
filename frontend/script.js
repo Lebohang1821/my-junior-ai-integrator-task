@@ -11,6 +11,7 @@ document.getElementById('startPractice').addEventListener('click', async () => {
     console.log('Received response:', data); // Log response
     if (data.transcription) {
       displayResults(data);
+      generateFlashcards(data.feedback);
     } else {
       document.getElementById('transcription').innerText = 'Error: Failed to transcribe audio.';
     }
@@ -35,6 +36,10 @@ document.getElementById('toggleDarkMode').addEventListener('change', (event) => 
 document.getElementById('clearData').addEventListener('click', () => {
   clearResults();
   console.log('Cleared all data'); // Log clear action
+});
+
+document.getElementById('reviewFlashcards').addEventListener('click', () => {
+  reviewFlashcards();
 });
 
 async function startTest() {
@@ -73,6 +78,7 @@ async function startTest() {
     }
   }
   displayOverallResults(overallScores, overallFeedback);
+  generateFlashcards(overallFeedback);
 }
 
 async function downloadData() {
@@ -180,6 +186,67 @@ function clearResults() {
   document.getElementById('scores').innerHTML = '';
   document.getElementById('instructions').innerText = '';
   document.getElementById('feedback').innerHTML = '';
+  document.getElementById('flashcards').innerHTML = '';
+}
+
+function generateFlashcards(feedback) {
+  const flashcards = [];
+  if (feedback.correctedSentences) {
+    feedback.correctedSentences.split('\n').forEach(sentence => {
+      if (sentence.trim()) {
+        flashcards.push({ type: 'Grammar', content: sentence, lastReviewed: null, reviewInterval: 1 });
+      }
+    });
+  }
+  if (feedback.pronunciationTips) {
+    feedback.pronunciationTips.split('\n').forEach(tip => {
+      if (tip.trim()) {
+        flashcards.push({ type: 'Pronunciation', content: tip, lastReviewed: null, reviewInterval: 1 });
+      }
+    });
+  }
+  if (feedback.vocabularySuggestions) {
+    feedback.vocabularySuggestions.split('\n').forEach(suggestion => {
+      if (suggestion.trim()) {
+        flashcards.push({ type: 'Vocabulary', content: suggestion, lastReviewed: null, reviewInterval: 1 });
+      }
+    });
+  }
+  localStorage.setItem('flashcards', JSON.stringify(flashcards));
+}
+
+function reviewFlashcards() {
+  const flashcards = JSON.parse(localStorage.getItem('flashcards')) || [];
+  const flashcardContainer = document.getElementById('flashcards');
+  flashcardContainer.innerHTML = '<h3>Flashcards</h3>';
+  flashcards.forEach((flashcard, index) => {
+    const card = document.createElement('div');
+    card.className = 'card mt-2';
+    card.innerHTML = `
+      <div class="card-body">
+        <h5 class="card-title">${flashcard.type}</h5>
+        <p class="card-text">${flashcard.content}</p>
+        <button class="btn btn-success" onclick="markFlashcard(${index}, true)">Correct</button>
+        <button class="btn btn-danger" onclick="markFlashcard(${index}, false)">Needs Review</button>
+      </div>
+    `;
+    flashcardContainer.appendChild(card);
+  });
+}
+
+function markFlashcard(index, correct) {
+  const flashcards = JSON.parse(localStorage.getItem('flashcards')) || [];
+  const flashcard = flashcards[index];
+  const now = new Date();
+  flashcard.lastReviewed = now.toISOString();
+  if (correct) {
+    flashcard.reviewInterval = Math.min(flashcard.reviewInterval * 2, 30); // Double the interval, max 30 days
+  } else {
+    flashcard.reviewInterval = 1; // Reset interval to 1 day
+  }
+  flashcards[index] = flashcard;
+  localStorage.setItem('flashcards', JSON.stringify(flashcards));
+  reviewFlashcards();
 }
 
 // New voice recognition script
@@ -261,6 +328,7 @@ if (!SpeechRecognition) {
           <p>Vocabulary Suggestions: ${data.feedback.vocabularySuggestions || 'N/A'}</p>
         `;
         document.getElementById('feedback').innerHTML = feedbackHtml;
+        generateFlashcards(data.feedback);
       })
       .catch(error => console.error('Error:', error));
   }
@@ -286,6 +354,7 @@ if (!SpeechRecognition) {
           <p>Vocabulary Suggestions: ${data.feedback.vocabularySuggestions || 'N/A'}</p>
         `;
         document.getElementById('feedback').innerHTML = feedbackHtml;
+        generateFlashcards(data.feedback);
       })
       .catch(error => console.error('Error:', error));
   }

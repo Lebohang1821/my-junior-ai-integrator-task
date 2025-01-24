@@ -35,7 +35,7 @@
     .btn-custom:hover {
       background-color: #0056b3;
     }
-    #transcription, #scores, #instructions {
+    #transcription, #scores, #instructions, #feedback, #flashcards {
       margin-top: 20px;
       padding: 10px;
       background-color: white;
@@ -86,7 +86,7 @@
     .dark-mode .btn-custom:hover {
       background-color: #777;
     }
-    .dark-mode #transcription, .dark-mode #scores, .dark-mode #instructions {
+    .dark-mode #transcription, .dark-mode #scores, .dark-mode #instructions, .dark-mode #feedback, .dark-mode #flashcards {
       background-color: #555;
       color: white;
     }
@@ -170,6 +170,10 @@
     <div id="transcription" class="mt-4"></div>
     <div id="scores" class="mt-4"></div>
     <div id="feedback" class="mt-4"></div>
+    <div id="flashcards" class="mt-4"></div>
+    <div class="text-center mt-4">
+      <button id="reviewFlashcards" class="btn btn-custom">Review Flashcards</button>
+    </div>
     <div class="text-center mt-4">
       <button id="downloadData" class="btn btn-custom">Download Data</button>
       <button id="clearData" class="btn btn-custom">Clear Data</button>
