@@ -4,6 +4,7 @@ const { SpeechClient } = require('@google-cloud/speech');
 const { Configuration, OpenAIApi } = require('openai');
 const pdfkit = require('pdfkit');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -11,7 +12,7 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use(cors());
 
 const speechClient = new SpeechClient({
-  keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+  keyFilename: path.join(__dirname, process.env.GOOGLE_APPLICATION_CREDENTIALS),
 });
 const openai = new OpenAIApi(new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
@@ -50,8 +51,8 @@ app.post('/transcribe', async (req, res) => {
     console.log('Received audio data:', audio); // Log audio data
     const [response] = await speechClient.recognize({
       config: {
-        encoding: 'LINEAR16',
-        sampleRateHertz: 16000,
+        encoding: 'WEBM_OPUS',
+        sampleRateHertz: 48000,
         languageCode: 'en-US',
       },
       audio: {
@@ -106,8 +107,8 @@ app.post('/practice', async (req, res) => {
     console.log('Received audio data for practice mode:', audio); // Log audio data
     const [response] = await speechClient.recognize({
       config: {
-        encoding: 'LINEAR16',
-        sampleRateHertz: 16000,
+        encoding: 'WEBM_OPUS',
+        sampleRateHertz: 48000,
         languageCode: 'en-US',
       },
       audio: {
@@ -134,8 +135,8 @@ app.post('/test/:part', async (req, res) => {
     console.log(`Processing test mode for ${part}`); // Log part being processed
     const [response] = await speechClient.recognize({
       config: {
-        encoding: 'LINEAR16',
-        sampleRateHertz: 16000,
+        encoding: 'WEBM_OPUS',
+        sampleRateHertz: 48000,
         languageCode: 'en-US',
       },
       audio: {
