@@ -1,0 +1,21 @@
+{
+  "name": "junior-ai-integrator-task",
+  "version": "1.0.0",
+  "description": "IELTS Speaking Test Simulation",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@google-cloud/speech": "^4.10.2",
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "openai": "^3.0.0",
+    "pdfkit": "^0.12.1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
