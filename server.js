@@ -45,6 +45,14 @@ const evaluatePronunciation = (transcription) => {
   return Math.min(9, phonemes / 10); // Placeholder logic
 };
 
+const generateFeedback = (transcription) => {
+  // Example feedback logic
+  const correctedSentences = transcription.replace(/is/g, 'was'); // Placeholder logic
+  const pronunciationTips = 'Try to pronounce "th" sounds more clearly.'; // Placeholder logic
+  const vocabularySuggestions = 'Use more advanced vocabulary like "elaborate" instead of "explain".'; // Placeholder logic
+  return { correctedSentences, pronunciationTips, vocabularySuggestions };
+};
+
 app.post('/transcribe', async (req, res) => {
   try {
     const audio = req.body.audio;
@@ -85,7 +93,7 @@ app.post('/respond', async (req, res) => {
 
 app.post('/generate-pdf', (req, res) => {
   try {
-    const { transcription, scores } = req.body;
+    const { transcription, scores, feedback } = req.body;
     const doc = new pdfkit();
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="IELTS_Speaking_Test_Report.pdf"');
@@ -94,6 +102,8 @@ app.post('/generate-pdf', (req, res) => {
     doc.text(`\nTranscription:\n${transcription}`);
     doc.text('\nScores:');
     doc.text(scores);
+    doc.text('\nFeedback:');
+    doc.text(feedback);
     doc.end();
   } catch (error) {
     console.error('Error generating PDF:', error);
@@ -121,7 +131,8 @@ app.post('/practice', async (req, res) => {
     const lexical = evaluateLexicalResource(transcription);
     const grammar = evaluateGrammar(transcription);
     const pronunciation = evaluatePronunciation(transcription);
-    res.json({ transcription, scores: { fluency, lexical, grammar, pronunciation } });
+    const feedback = generateFeedback(transcription);
+    res.json({ transcription, scores: { fluency, lexical, grammar, pronunciation }, feedback });
   } catch (error) {
     console.error('Error in practice mode:', error);
     res.status(500).json({ error: 'Failed to process practice mode', details: error.message });
@@ -149,7 +160,8 @@ app.post('/test/:part', async (req, res) => {
     const lexical = evaluateLexicalResource(transcription);
     const grammar = evaluateGrammar(transcription);
     const pronunciation = evaluatePronunciation(transcription);
-    res.json({ transcription, scores: { fluency, lexical, grammar, pronunciation }, part });
+    const feedback = generateFeedback(transcription);
+    res.json({ transcription, scores: { fluency, lexical, grammar, pronunciation }, feedback, part });
   } catch (error) {
     console.error(`Error in test mode (${req.params.part}):`, error);
     res.status(500).json({ error: `Failed to process test mode (${req.params.part})`, details: error.message });

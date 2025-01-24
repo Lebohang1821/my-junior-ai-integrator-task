@@ -10,16 +10,7 @@ document.getElementById('startPractice').addEventListener('click', async () => {
     const data = await response.json();
     console.log('Received response:', data); // Log response
     if (data.transcription) {
-      document.getElementById('transcription').innerText = `Transcription: ${data.transcription}`;
-      document.getElementById('scores').innerHTML = `
-        <p>Scores:</p>
-        <ul>
-          <li>Fluency: ${data.scores.fluency.toFixed(2)}</li>
-          <li>Lexical Resource: ${data.scores.lexical.toFixed(2)}</li>
-          <li>Grammar: ${data.scores.grammar.toFixed(2)}</li>
-          <li>Pronunciation: ${data.scores.pronunciation.toFixed(2)}</li>
-        </ul>
-      `;
+      displayResults(data);
     } else {
       document.getElementById('transcription').innerText = 'Error: Failed to transcribe audio.';
     }
@@ -42,9 +33,7 @@ document.getElementById('toggleDarkMode').addEventListener('change', (event) => 
 });
 
 document.getElementById('clearData').addEventListener('click', () => {
-  document.getElementById('transcription').innerText = '';
-  document.getElementById('scores').innerHTML = '';
-  document.getElementById('instructions').innerText = '';
+  clearResults();
   console.log('Cleared all data'); // Log clear action
 });
 
@@ -55,6 +44,7 @@ async function startTest() {
     { part: 'part3', instruction: 'Step 3: Let\'s discuss the topic further.' }
   ];
   let overallScores = { fluency: 0, lexical: 0, grammar: 0, pronunciation: 0 };
+  let overallFeedback = { correctedSentences: '', pronunciationTips: '', vocabularySuggestions: '' };
   for (const { part, instruction } of parts) {
     document.getElementById('instructions').innerText = instruction;
     await new Promise(resolve => setTimeout(resolve, 3000)); // Wait for 3 seconds to show the instruction
@@ -73,25 +63,23 @@ async function startTest() {
       overallScores.lexical += data.scores.lexical;
       overallScores.grammar += data.scores.grammar;
       overallScores.pronunciation += data.scores.pronunciation;
+      if (data.feedback) {
+        overallFeedback.correctedSentences += (data.feedback.correctedSentences || '') + '\n';
+        overallFeedback.pronunciationTips += (data.feedback.pronunciationTips || '') + '\n';
+        overallFeedback.vocabularySuggestions += (data.feedback.vocabularySuggestions || '') + '\n';
+      }
     } else {
       document.getElementById('transcription').innerText += `\n\n${part.toUpperCase()} Transcription: Error: Failed to transcribe audio.`;
     }
   }
-  document.getElementById('scores').innerHTML = `
-    <p>Overall Scores:</p>
-    <ul>
-      <li>Fluency: ${(overallScores.fluency / parts.length).toFixed(2)}</li>
-      <li>Lexical Resource: ${(overallScores.lexical / parts.length).toFixed(2)}</li>
-      <li>Grammar: ${(overallScores.grammar / parts.length).toFixed(2)}</li>
-      <li>Pronunciation: ${(overallScores.pronunciation / parts.length).toFixed(2)}</li>
-    </ul>
-  `;
+  displayOverallResults(overallScores, overallFeedback);
 }
 
 async function downloadData() {
   const transcription = document.getElementById('transcription').innerText;
   const scores = document.getElementById('scores').innerText;
-  const data = { transcription, scores };
+  const feedback = document.getElementById('feedback').innerText;
+  const data = { transcription, scores, feedback };
   const response = await fetch('http://localhost:3000/generate-pdf', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -146,6 +134,54 @@ async function recordAudio() {
   });
 }
 
+function displayResults(data) {
+  document.getElementById('transcription').innerText = `Transcription: ${data.transcription}`;
+  document.getElementById('scores').innerHTML = `
+    <p>Scores:</p>
+    <ul>
+      <li>Fluency: ${data.scores.fluency.toFixed(2)}</li>
+      <li>Lexical Resource: ${data.scores.lexical.toFixed(2)}</li>
+      <li>Grammar: ${data.scores.grammar.toFixed(2)}</li>
+      <li>Pronunciation: ${data.scores.pronunciation.toFixed(2)}</li>
+    </ul>
+  `;
+  document.getElementById('feedback').innerHTML = `
+    <p>Feedback:</p>
+    <ul>
+      <li>Corrected Sentences: ${data.feedback.correctedSentences || 'N/A'}</li>
+      <li>Pronunciation Tips: ${data.feedback.pronunciationTips || 'N/A'}</li>
+      <li>Vocabulary Suggestions: ${data.feedback.vocabularySuggestions || 'N/A'}</li>
+    </ul>
+  `;
+}
+
+function displayOverallResults(overallScores, overallFeedback) {
+  document.getElementById('scores').innerHTML = `
+    <p>Overall Scores:</p>
+    <ul>
+      <li>Fluency: ${(overallScores.fluency / 3).toFixed(2)}</li>
+      <li>Lexical Resource: ${(overallScores.lexical / 3).toFixed(2)}</li>
+      <li>Grammar: ${(overallScores.grammar / 3).toFixed(2)}</li>
+      <li>Pronunciation: ${(overallScores.pronunciation / 3).toFixed(2)}</li>
+    </ul>
+  `;
+  document.getElementById('feedback').innerHTML = `
+    <p>Overall Feedback:</p>
+    <ul>
+      <li>Corrected Sentences: ${overallFeedback.correctedSentences || 'N/A'}</li>
+      <li>Pronunciation Tips: ${overallFeedback.pronunciationTips || 'N/A'}</li>
+      <li>Vocabulary Suggestions: ${overallFeedback.vocabularySuggestions || 'N/A'}</li>
+    </ul>
+  `;
+}
+
+function clearResults() {
+  document.getElementById('transcription').innerText = '';
+  document.getElementById('scores').innerHTML = '';
+  document.getElementById('instructions').innerText = '';
+  document.getElementById('feedback').innerHTML = '';
+}
+
 // New voice recognition script
 const recordBtn = document.querySelector(".record"),
   result = document.querySelector(".result"),
@@ -179,7 +215,7 @@ if (!SpeechRecognition) {
           if (mode === "practice") {
             provideFeedback(speechResult);
           } else if (mode === "test") {
-            // Handle test mode logic
+            provideTestFeedback(speechResult);
           }
         } else {
           if (!document.querySelector(".interim")) {
@@ -216,13 +252,40 @@ if (!SpeechRecognition) {
       .then(data => {
         // Display feedback
         const feedbackHtml = `
-          <p>Fluency: ${data.fluency.toFixed(2)}</p>
-          <p>Coherence: ${data.coherence.toFixed(2)}</p>
-          <p>Lexical Resource: ${data.lexicalResource.toFixed(2)}</p>
-          <p>Grammar: ${data.grammar.toFixed(2)}</p>
-          <p>Pronunciation: ${data.pronunciation.toFixed(2)}</p>
+          <p>Fluency: ${data.scores.fluency.toFixed(2)}</p>
+          <p>Lexical Resource: ${data.scores.lexical.toFixed(2)}</p>
+          <p>Grammar: ${data.scores.grammar.toFixed(2)}</p>
+          <p>Pronunciation: ${data.scores.pronunciation.toFixed(2)}</p>
+          <p>Corrected Sentences: ${data.feedback.correctedSentences || 'N/A'}</p>
+          <p>Pronunciation Tips: ${data.feedback.pronunciationTips || 'N/A'}</p>
+          <p>Vocabulary Suggestions: ${data.feedback.vocabularySuggestions || 'N/A'}</p>
         `;
-        result.innerHTML += feedbackHtml;
+        document.getElementById('feedback').innerHTML = feedbackHtml;
+      })
+      .catch(error => console.error('Error:', error));
+  }
+
+  function provideTestFeedback(speechResult) {
+    fetch('http://localhost:3000/test', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text: speechResult }),
+    })
+      .then(response => response.json())
+      .then(data => {
+        // Display feedback
+        const feedbackHtml = `
+          <p>Fluency: ${data.scores.fluency.toFixed(2)}</p>
+          <p>Lexical Resource: ${data.scores.lexical.toFixed(2)}</p>
+          <p>Grammar: ${data.scores.grammar.toFixed(2)}</p>
+          <p>Pronunciation: ${data.scores.pronunciation.toFixed(2)}</p>
+          <p>Corrected Sentences: ${data.feedback.correctedSentences || 'N/A'}</p>
+          <p>Pronunciation Tips: ${data.feedback.pronunciationTips || 'N/A'}</p>
+          <p>Vocabulary Suggestions: ${data.feedback.vocabularySuggestions || 'N/A'}</p>
+        `;
+        document.getElementById('feedback').innerHTML = feedbackHtml;
       })
       .catch(error => console.error('Error:', error));
   }
@@ -278,7 +341,7 @@ if (!SpeechRecognition) {
   downloadBtn.addEventListener("click", download);
 
   clearBtn.addEventListener("click", () => {
-    result.innerHTML = "";
+    clearResults();
     downloadBtn.disabled = true;
   });
 
